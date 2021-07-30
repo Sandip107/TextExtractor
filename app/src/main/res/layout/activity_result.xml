@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_height="match_parent"
+    tools:context=".Result">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:textStyle="bold"
+        android:text="Translate"
+        android:gravity="center"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:padding="4dp"
+        android:textColor="@color/black"
+        android:textSize="20sp" />
+   <LinearLayout
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:orientation="horizontal"
+       android:weightSum="3"
+       android:layout_marginStart="28dp"
+       android:layout_marginLeft="28dp"
+       android:layout_marginEnd="28dp"
+       android:backgroundTint="@color/teal_700"
+       android:layout_marginTop="18dp">
+       <Spinner
+
+           android:layout_width="8dp"
+           android:layout_height="wrap_content"
+           android:id="@+id/spinner"
+           android:layout_weight="1"
+           android:layout_margin="3dp"
+           android:gravity="center"
+           android:padding="3dp"/>
+       <ImageView
+           android:layout_width="8dp"
+           android:layout_height="wrap_content"
+           android:layout_weight="1"
+           android:src="@drawable/ic_arrow_right"
+           android:layout_gravity="center"
+           app:tint="@color/black" />
+       <Spinner
+           android:layout_width="8dp"
+           android:layout_height="wrap_content"
+           android:layout_weight="1"
+           android:layout_margin="3dp"
+           android:id="@+id/spinner2"
+           android:gravity="center"
+           android:padding="3dp"
+
+           />
+
+   </LinearLayout>
+
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/sourcedt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:importantForAutofill="no"
+        android:inputType="textImeMultiLine|textMultiLine"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:layout_width="match_parent"
+        android:id="@+id/transBtn"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:backgroundTint="@color/teal_700"
+        android:layout_marginLeft="20dp"
+        android:textColor="@color/black"
+        android:textAllCaps="false"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="20dp"
+        android:text="Translate"/>
+
+<TextView
+    android:id="@+id/translated"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Translated Text"
+    android:textAllCaps="false"
+    android:textColor="@color/black"
+    android:textSize="20sp"
+    android:gravity="center"
+    android:layout_marginTop="5dp"/>
+
+</LinearLayout>
