@@ -49,7 +49,6 @@ public class Result extends AppCompatActivity {
         Intent intent=getIntent();
         String str1=intent.getStringExtra("mess");
         sourceEdt.setText(str1);
-        System.out.println(str1);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
