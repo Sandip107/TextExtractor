@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int CAMERA_REQUEST_CODE=200;
-    private static final String CLOUD_VISION_API_KEY="AIzaSyA3lz3yAIHoMbQXaqG_cW1meYXougOELGQ";
+    private static final String CLOUD_VISION_API_KEY="API_KEY";
     private static final int STORAGE_REQUEST_CODE=400;
     private static final int IMAGE_PICK_GALLERY_CODE=1000;
     private static final int IMAGE_PICK_CAMERA_CODE=1001;
