@@ -166,6 +166,50 @@ public class Result extends AppCompatActivity {
                 LangCode1=FirebaseTranslateLanguage.NL;
                 langTextv.setText("Dutch");
                 break;
+            case "ru":
+                LangCode1=FirebaseTranslateLanguage.RU;
+                langTextv.setText("Russian");
+                break;
+            case "ta":
+                LangCode1=FirebaseTranslateLanguage.TA;
+                langTextv.setText("Tamil");
+                break;
+            case "ur":
+                LangCode1=FirebaseTranslateLanguage.UR;
+                langTextv.setText("Urdu");
+                break;
+            case "gu":
+                LangCode1=FirebaseTranslateLanguage.GU;
+                langTextv.setText("Gujarati");
+                break;
+            case "id":
+                LangCode1=FirebaseTranslateLanguage.ID;
+                langTextv.setText("Indonesian");
+                break;
+            case "ja":
+                LangCode1=FirebaseTranslateLanguage.JA;
+                langTextv.setText("Japanese");
+                break;
+            case "el":
+                LangCode1=FirebaseTranslateLanguage.EL;
+                langTextv.setText("Greek");
+                break;
+            case "ar":
+                LangCode1=FirebaseTranslateLanguage.AR;
+                langTextv.setText("Arabic");
+                break;
+            case "bn":
+                LangCode1=FirebaseTranslateLanguage.BN;
+                langTextv.setText("Bengali");
+                break;
+            case "sv":
+                LangCode1=FirebaseTranslateLanguage.SV;
+                langTextv.setText("Swedish");
+                break;
+            case "pt":
+                LangCode1=FirebaseTranslateLanguage.PT;
+                langTextv.setText("Portuguese");
+                break;
             default:
                 LangCode1=0;
 
