@@ -32,34 +32,59 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.vision.v1.Vision;
+import com.google.api.services.vision.v1.VisionRequest;
+import com.google.api.services.vision.v1.VisionRequestInitializer;
+import com.google.api.services.vision.v1.model.AnnotateImageRequest;
+import com.google.api.services.vision.v1.model.BatchAnnotateImagesRequest;
+import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
+import com.google.api.services.vision.v1.model.EntityAnnotation;
+import com.google.api.services.vision.v1.model.Feature;
+import com.google.api.services.vision.v1.model.Image;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 
 public class MainActivity extends AppCompatActivity {
     EditText editText;
+
     FloatingActionButton addfab,addcam,addgal;
     private static Boolean isAllFabsVisible;
     ImageView imageView;
+    Button go;
+    private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
+    private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
+    private static final String TAG = MainActivity.class.getSimpleName();
     private static final int CAMERA_REQUEST_CODE=200;
+    private static final String CLOUD_VISION_API_KEY="AIzaSyA3lz3yAIHoMbQXaqG_cW1meYXougOELGQ";
     private static final int STORAGE_REQUEST_CODE=400;
     private static final int IMAGE_PICK_GALLERY_CODE=1000;
     private static final int IMAGE_PICK_CAMERA_CODE=1001;
+    private static final int MAX_DIMENSION = 1200;
     String cameraPermission[];
     String storagePermission[];
+    String finalResult;
     Uri image_uri;
-    String str;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
         Animation an4=AnimationUtils.loadAnimation(this,R.anim.to_bottom_anim);
         setContentView(R.layout.activity_main);
         ActionBar actionBar=getSupportActionBar();
+        go=findViewById(R.id.btngo);
         addfab=findViewById(R.id.add_fab);
         addcam=findViewById(R.id.add__cam);
         addgal=findViewById(R.id.add_gall);
@@ -77,6 +103,16 @@ public class MainActivity extends AppCompatActivity {
         cameraPermission=new String[]{Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE};
         storagePermission=new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
         isAllFabsVisible = false;
+        go.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(MainActivity.this,Result.class);
+                String str=editText.getText().toString();
+                intent.putExtra("mess",str);
+                startActivity(intent);
+
+            }
+        });
         addfab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -218,36 +254,163 @@ public class MainActivity extends AppCompatActivity {
             CropImage.ActivityResult result= CropImage.getActivityResult(data);
             if (resultCode==RESULT_OK){
                 Uri resultUri=result.getUri();
-                imageView.setImageURI(resultUri);
-                BitmapDrawable bitmapDrawable=(BitmapDrawable)imageView.getDrawable();
-                Bitmap bitmap=bitmapDrawable.getBitmap();
-                TextRecognizer recognizer=new TextRecognizer.Builder(getApplicationContext()).build();
-                if (!recognizer.isOperational()) {
-                    Toast.makeText(this,"Error",Toast.LENGTH_SHORT).show();
-                }
-                else
-                {
-                    Frame frame=new Frame.Builder().setBitmap(bitmap).build();
-                    SparseArray<TextBlock> items=recognizer.detect(frame);
-                    StringBuilder sb =new StringBuilder();
-                    for (int i=0;i<items.size();i++){
-                        TextBlock myitems =items.valueAt(i);
-                        sb.append(myitems.getValue());
-                        sb.append("\n");
-                    }
-                    str =sb.toString();
-                    addfab.callOnClick();
-                    Intent intent=new Intent(MainActivity.this,Result.class);
-                    intent.putExtra("mess",str);
-                    startActivity(intent);
-                    imageView.setVisibility(View.INVISIBLE);
-                   // System.out.println(str);
-                }
+                uploadPhoto(resultUri);
+                addfab.callOnClick();
             }
             else if (resultCode==CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE){
                 Exception error=result.getError();
                 Toast.makeText(this,""+error,Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    private void uploadPhoto(Uri uri) {
+        if (uri != null) {
+            try {
+                // scale the image to save on bandwidth
+                Bitmap bitmap =
+                        scaleBitmapDown(
+                                MediaStore.Images.Media.getBitmap(getContentResolver(), uri),
+                                MAX_DIMENSION);
+
+                callCloudVision(bitmap);
+                imageView.setImageBitmap(bitmap);
+
+            } catch (IOException e) {
+                Log.d(TAG, "Image picking failed because " + e.getMessage());
+                Toast.makeText(this,"Error", Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Log.d(TAG, "Image picker gave us a null image.");
+            Toast.makeText(this, "Error", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void callCloudVision(Bitmap bitmap) {
+
+        // Do the real work in an async task, because we need to use the network anyway
+        try {
+            AsyncTask<Object, Void, String> labelDetectionTask = new LableDetectionTask(this, prepareAnnotationRequest(bitmap));
+            labelDetectionTask.execute();
+        } catch (IOException e) {
+            Log.d(TAG, "failed to make API request because of other IOException " +
+                    e.getMessage());
+        }
+    }
+    private static class LableDetectionTask extends AsyncTask<Object, Void, String> {
+        private final WeakReference<MainActivity> mActivityWeakReference;
+        private Vision.Images.Annotate mRequest;
+
+        LableDetectionTask(MainActivity activity, Vision.Images.Annotate annotate) {
+            mActivityWeakReference = new WeakReference<>(activity);
+            mRequest = annotate;
+        }
+
+        @Override
+        protected String doInBackground(Object... params) {
+            try {
+                Log.d(TAG, "created Cloud Vision request object, sending request");
+                BatchAnnotateImagesResponse response = mRequest.execute();
+                return convertResponseToString(response);
+
+            } catch (GoogleJsonResponseException e) {
+                Log.d(TAG, "failed to make API request because " + e.getContent());
+            } catch (IOException e) {
+                Log.d(TAG, "failed to make API request because of other IOException " +
+                        e.getMessage());
+            }
+            return "Cloud Vision API request failed. Check logs for details.";
+        }
+
+        protected void onPostExecute(String result) {
+            MainActivity activity = mActivityWeakReference.get();
+            if (activity != null && !activity.isFinishing()) {
+                TextView textView = activity.findViewById(R.id.EditText);
+                textView.setText(result);
+            }
+        }
+    }
+    private Vision.Images.Annotate prepareAnnotationRequest(Bitmap bitmap) throws IOException {
+        HttpTransport httpTransport = AndroidHttp.newCompatibleTransport();
+        JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+        VisionRequestInitializer requestInitializer =
+                new VisionRequestInitializer(CLOUD_VISION_API_KEY) {
+                    @Override
+                    //API Key
+                    protected void initializeVisionRequest(VisionRequest<?> visionRequest)
+                            throws IOException {
+                        super.initializeVisionRequest(visionRequest);
+
+                        String packageName = getPackageName();
+                        visionRequest.getRequestHeaders().set(ANDROID_PACKAGE_HEADER, packageName);
+
+                        String sig = PackageManagerUtils.getSignature(getPackageManager(), packageName);
+
+                        visionRequest.getRequestHeaders().set(ANDROID_CERT_HEADER, sig);
+                    }
+                };
+
+        Vision.Builder builder = new Vision.Builder(httpTransport, jsonFactory, null);
+        builder.setVisionRequestInitializer(requestInitializer);
+        Vision vision = builder.build();
+        BatchAnnotateImagesRequest batchAnnotateImagesRequest =
+                new BatchAnnotateImagesRequest();
+        batchAnnotateImagesRequest.setRequests(new ArrayList<AnnotateImageRequest>() {{
+            AnnotateImageRequest annotateImageRequest = new AnnotateImageRequest();
+            Image base64EncodedImage = new Image();
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream);
+            byte[] imageBytes = byteArrayOutputStream.toByteArray();
+            base64EncodedImage.encodeContent(imageBytes);
+            annotateImageRequest.setImage(base64EncodedImage);
+            annotateImageRequest.setFeatures(new ArrayList<Feature>() {{
+                Feature labelDetection = new Feature();
+                labelDetection.setType("TEXT_DETECTION");
+                labelDetection.setMaxResults(10);
+                add(labelDetection);
+            }});
+            add(annotateImageRequest);
+        }});
+
+        Vision.Images.Annotate annotateRequest = vision.images().annotate(batchAnnotateImagesRequest);
+        annotateRequest.setDisableGZipContent(true);
+        Log.d(TAG, "created Cloud Vision request object, sending request");
+        return annotateRequest;
+    }
+
+
+    private Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
+
+        int originalWidth = bitmap.getWidth();
+        int originalHeight = bitmap.getHeight();
+        int resizedWidth = maxDimension;
+        int resizedHeight = maxDimension;
+
+        if (originalHeight > originalWidth) {
+            resizedHeight = maxDimension;
+            resizedWidth = (int) (resizedHeight * (float) originalWidth / (float) originalHeight);
+        } else if (originalWidth > originalHeight) {
+            resizedWidth = maxDimension;
+            resizedHeight = (int) (resizedWidth * (float) originalHeight / (float) originalWidth);
+        } else if (originalHeight == originalWidth) {
+            resizedHeight = maxDimension;
+            resizedWidth = maxDimension;
+        }
+        return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false);
+    }
+    private static String convertResponseToString(BatchAnnotateImagesResponse response) {
+        StringBuilder message = new StringBuilder("");
+        List<EntityAnnotation> texts = response.getResponses().get(0).getTextAnnotations();
+        if (texts != null) {
+            String s1;
+            for (EntityAnnotation label : texts) {
+                message.append(label.getDescription());
+                break;
+            }
+        } else {
+            message.append("nothing");
+        }
+
+        return message.toString();
     }
 }

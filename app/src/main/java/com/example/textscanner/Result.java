@@ -16,57 +16,45 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.ml.common.modeldownload.FirebaseModelDownloadConditions;
 import com.google.firebase.ml.naturallanguage.FirebaseNaturalLanguage;
+import com.google.firebase.ml.naturallanguage.languageid.FirebaseLanguageIdentification;
 import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslateLanguage;
 import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslator;
 import com.google.firebase.ml.naturallanguage.translate.FirebaseTranslatorOptions;
 
+
 public class Result extends AppCompatActivity {
     private EditText editText1;
-    private Spinner spinner,spinner2;
+    private Spinner spinner, spinner2;
     private TextInputEditText sourceEdt;
-    private TextView textView;
+    private TextView textView, langTextv;
     private TextInputLayout textInputLayout;
-    private Button btntrans;
-    String fromLanguages[]={"From","English"};
-    String toLanguages[]={"To","Hindi","Marathi","Tamil"};
-    int LanguageCode,fromLanguageCode,toLanguageCode=0;
+    private Button btntrans, btnident;
+    String fromLanguages[] = {"From", "English"};
+    String toLanguages[] = {"To", "English", "Hindi", "Marathi", "Tamil"};
+    int LanguageCode, LangCode = 0, toLanguageCode = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
-        spinner2=findViewById(R.id.spinner2);
-        sourceEdt=findViewById(R.id.sourcedt);
-        btntrans=findViewById(R.id.transBtn);
-        editText1=findViewById(R.id.EditText);
-        spinner=findViewById(R.id.spinner);
-        textView=findViewById(R.id.translated);
-        Intent intent=getIntent();
-        String str1=intent.getStringExtra("mess");
+        spinner2 = findViewById(R.id.spinner2);
+        sourceEdt = findViewById(R.id.sourcedt);
+        btntrans = findViewById(R.id.transBtn);
+        editText1 = findViewById(R.id.EditText);
+        textView = findViewById(R.id.translated);
+        langTextv = findViewById(R.id.Lang);
+        Intent intent = getIntent();
+        String str1 = intent.getStringExtra("mess");
         sourceEdt.setText(str1);
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                fromLanguageCode=getLanguageCode(fromLanguages[position]);
-            }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-        ArrayAdapter fromAdapter=new ArrayAdapter(this,R.layout.spinner_item,fromLanguages);
-        fromAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(fromAdapter);
         spinner2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                toLanguageCode=getLanguageCode(toLanguages[position]);
+                toLanguageCode = getLanguageCode(toLanguages[position]);
 
             }
 
@@ -75,35 +63,35 @@ public class Result extends AppCompatActivity {
 
             }
         });
-        ArrayAdapter toAdapter=new ArrayAdapter(this,R.layout.spinner_item,toLanguages);
+        ArrayAdapter toAdapter = new ArrayAdapter(this, R.layout.spinner_item, toLanguages);
         toAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner2.setAdapter(toAdapter);
         btntrans.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 textView.setText("");
-                if (sourceEdt.getText().toString().isEmpty()){
-                    Toast.makeText(Result.this,"Text not Present",Toast.LENGTH_SHORT).show();
-                }else if (fromLanguageCode==0){
-                    Toast.makeText(Result.this,"Select Source Language",Toast.LENGTH_SHORT).show();
-                }else if (toLanguageCode==0){
-                    Toast.makeText(Result.this,"Select Destination Language",Toast.LENGTH_SHORT).show();
-                }else {
-                    translateText(fromLanguageCode,toLanguageCode,sourceEdt.getText().toString());
-                }
+                if (sourceEdt.getText().toString().isEmpty()) {
+                    Toast.makeText(Result.this, "Text not Present", Toast.LENGTH_SHORT).show();
+                } else if (toLanguageCode == 0) {
+                    Toast.makeText(Result.this, "Select Destination Language", Toast.LENGTH_SHORT).show();
+                } else {
+                    identifyLanguage();                }
             }
         });
 
     }
 
-    private void translateText(int fromLanguageCode, int toLanguageCode, String source) {
-        textView.setText("Downloding Model.....");
-        FirebaseTranslatorOptions options=new FirebaseTranslatorOptions.Builder()
-                .setSourceLanguage(fromLanguageCode)
+
+    private void translateText(int LangCode, int toLanguageCode, String source) {
+        System.out.println(LangCode);
+        textView.setText("Downloading Model...");
+        FirebaseTranslatorOptions options = new FirebaseTranslatorOptions.Builder()
+                .setSourceLanguage(LangCode)
                 .setTargetLanguage(toLanguageCode)
                 .build();
-        FirebaseTranslator translator= FirebaseNaturalLanguage.getInstance().getTranslator(options);
-        FirebaseModelDownloadConditions  conditions=new FirebaseModelDownloadConditions.Builder().build();
+
+        FirebaseTranslator translator = FirebaseNaturalLanguage.getInstance().getTranslator(options);
+        FirebaseModelDownloadConditions conditions = new FirebaseModelDownloadConditions.Builder().build();
         translator.downloadModelIfNeeded().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -116,19 +104,74 @@ public class Result extends AppCompatActivity {
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(Result.this,"Failed to Translate"+e.getMessage(),Toast.LENGTH_SHORT).show();
+                        Toast.makeText(Result.this, "Failed to Translate" + e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(Result.this,"Failed to Download Model"+e.getMessage(),Toast.LENGTH_SHORT).show();
+                        Toast.makeText(Result.this, "Failed to Download Model" + e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
             }
         });
+
     }
 
+    private void identifyLanguage() {
+        textView.setText("Identifying Language...");
+        if (sourceEdt.getText().toString().isEmpty()) {
+            Toast.makeText(Result.this, "Text not Present", Toast.LENGTH_SHORT).show();
+        }
+        String text = sourceEdt.getText().toString();
+        FirebaseLanguageIdentification identifer = FirebaseNaturalLanguage.getInstance().getLanguageIdentification();
+        identifer.identifyLanguage(text).addOnSuccessListener(new OnSuccessListener<String>() {
+            @Override
+            public void onSuccess(String s) {
+                if (s.equals("und")) {
+                    Toast.makeText(Result.this, "Language not identifield", Toast.LENGTH_SHORT).show();
+                } else {
+                    getLangCode(s);
+                }
+            }
+        });
+    }
+    private void getLangCode(String language) {
+        int LangCode1=0;
+        switch (language){
+            case "hi":
+                LangCode1=FirebaseTranslateLanguage.HI;
+                langTextv.setText("Hindi");
+                break;
+            case "en":
+                LangCode1=FirebaseTranslateLanguage.EN;
+                langTextv.setText("English");
+                break;
+            case "mr":
+                LangCode1=FirebaseTranslateLanguage.MR;
+                langTextv.setText("Marathi");
+                break;
+            case "es":
+                LangCode1=FirebaseTranslateLanguage.ES;
+                langTextv.setText("Spanish");
+                break;
+            case "de":
+                LangCode1=FirebaseTranslateLanguage.DE;
+                langTextv.setText("Germen");
+                break;
+            case "fr":
+                LangCode1=FirebaseTranslateLanguage.FR;
+                langTextv.setText("French");
+                break;
+            case "nl":
+                LangCode1=FirebaseTranslateLanguage.NL;
+                langTextv.setText("Dutch");
+                break;
+            default:
+                LangCode1=0;
 
+        }
+        translateText(LangCode1, toLanguageCode, sourceEdt.getText().toString());
+    }
     private int getLanguageCode(String language) {
         int languageCode=0;
         switch (language){

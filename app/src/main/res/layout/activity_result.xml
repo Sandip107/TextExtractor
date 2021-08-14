@@ -29,11 +29,11 @@
         android:layout_marginEnd="28dp"
         android:backgroundTint="@color/teal_700"
         android:layout_marginTop="18dp">
-        <Spinner
+        <TextView
 
             android:layout_width="8dp"
             android:layout_height="wrap_content"
-            android:id="@+id/spinner"
+            android:id="@+id/Lang"
             android:layout_weight="1"
             android:layout_margin="3dp"
             android:gravity="center"
@@ -68,7 +68,6 @@
         android:inputType="textImeMultiLine|textMultiLine"
         android:textColor="@color/black"
         android:textSize="14sp" />
-
     <com.google.android.material.button.MaterialButton
         android:layout_width="match_parent"
         android:id="@+id/transBtn"
