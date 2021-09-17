@@ -80,7 +80,7 @@ public class Result extends AppCompatActivity {
         });
 
     }
-
+// Call translateText mathod
 
     private void translateText(int LangCode, int toLanguageCode, String source) {
         System.out.println(LangCode);
