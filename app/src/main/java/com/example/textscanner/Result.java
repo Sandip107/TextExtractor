@@ -116,7 +116,7 @@ public class Result extends AppCompatActivity {
         });
 
     }
-
+//get language code
     private void identifyLanguage() {
         textView.setText("Identifying Language...");
         if (sourceEdt.getText().toString().isEmpty()) {
